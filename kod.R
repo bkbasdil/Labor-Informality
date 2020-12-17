@@ -1,0 +1,148 @@
+##### PREAMBLE ####
+#install.packages("VIM")
+#install.packages("Amelia")
+#install.packages("rdd")
+#install.packages("tidyverse")
+#install.packages("broom")
+#install.packages("writexl")
+
+
+library(VIM)
+library(Amelia)
+library(readxl)
+library(rdd)
+library(ggplot2)
+library(tidyverse)
+library(broom)
+library(xtable)
+library(broom)     
+library(writexl)
+library(dplyr)
+
+options(xtable.floating = FALSE)
+options(xtable.timestamp = "")
+
+##### SUMMARY STATISTICS ####
+
+EFOTW.main <- read_excel("C:/Çalýþmalar/A Survey on Labor Law Rigidity and the Informal Economy/EFOTW.xlsx")
+EFOTW.numerical <- EFOTW.main[,c(3,4,5,6,7,8)]
+summary(EFOTW.numerical)
+
+#CORRELATIONS
+correlations <- cor(EFOTW.numerical, use = "pairwise.complete.obs")
+round(correlations, 2)
+
+#STANDARD DEVIATIONS
+sd(EFOTW.numerical$`Hiring regulations and minimum wage`, na.rm = TRUE)
+sd(EFOTW.numerical$`Hiring and firing regulations`, na.rm = TRUE)
+sd(EFOTW.numerical$`Size of Government`, na.rm = TRUE)
+sd(EFOTW.numerical$`Centralized collective bargaining`, na.rm = TRUE)
+sd(EFOTW.numerical$`Hours Regulations`, na.rm = TRUE)
+sd(EFOTW.numerical$`Mandated cost of worker dismissal`, na.rm = TRUE)
+
+
+#EFOTW.restricted <- matrix(data = NA, nrow = nrow(EFOTW.main), ncol = ncol(EFOTW.main))
+
+#i = 1
+#for (i in nrow(EFOTW.main)) {
+#  if(EFOTW.main[i,]$Year > 1983) {
+#    if(EFOTW.main[i,]$Year < 2018) {
+#    EFOTW.restricted[i,] <- EFOTW.main[i,]
+#  }
+#}
+#}
+
+# INFORMALITY
+informality <- read_excel("C:/Çalýþmalar/A Survey on Labor Law Rigidity and the Informal Economy/informality.xlsx")
+summary(informality)
+sd(informality$yi_yf, na.rm =T)
+
+# NA ANALYSIS
+length(which(is.na(EFOTW.numerical$`Hiring regulations and minimum wage`)))/length(EFOTW.numerical$`Hiring regulations and minimum wage`)
+length(which(is.na(EFOTW.numerical$`Hiring and firing regulations`)))/length(EFOTW.numerical$`Hiring and firing regulations`)
+length(which(is.na(EFOTW.numerical$`Size of Government`)))/length(EFOTW.numerical$`Size of Government`)
+length(which(is.na(EFOTW.numerical$`Centralized collective bargaining`)))/length(EFOTW.numerical$`Centralized collective bargaining`)
+length(which(is.na(EFOTW.numerical$`Hours Regulations`)))/length(EFOTW.numerical$`Hours Regulations`)
+length(which(is.na(EFOTW.numerical$`Mandated cost of worker dismissal`)))/length(EFOTW.numerical$`Mandated cost of worker dismissal`)
+
+summary(aggr(EFOTW.numerical))
+
+missmap(EFOTW.numerical, main = "Missing Values", col = c("pink", "snow2"))
+
+
+##### THE INDEX ####
+#NUMBER OF NA OBSERVATIONS IN DATA
+number.of.null <- matrix(0, ncol = 1, nrow = nrow(EFOTW.numerical))
+for (i in 1:nrow(EFOTW.numerical)) {
+  for (j in 1:ncol(EFOTW.numerical)) {
+    if(is.na(EFOTW.numerical[i,j])) {
+      
+      number.of.null[i] <- number.of.null[i] + 1
+      
+    }
+    
+  }
+}
+
+#NUMBER OF NON-NA OBSERVATIONS IN DATA
+number.of.nonna.variables <- 6 - number.of.null
+
+#INTERMEDIATE INDEX AS ARITHMETIC AVERAGE OF OBSERVATIONS
+index <- matrix(0, ncol = 1, nrow = nrow(EFOTW.numerical))
+for (i in 1:nrow(EFOTW.numerical)) {
+  for (j in 1:ncol(EFOTW.numerical)) {
+    if(!is.na(EFOTW.numerical[i,j])) {
+      
+      index[i] <- index[i] + EFOTW.numerical[i,j]
+      
+    }
+    
+  }
+}
+
+#WEIGHTED INDEX BY THE NUMBER OF AVAILABLE COMPONENTS
+weighted.index <- unlist(index)/number.of.nonna.variables
+
+#INITIAL DATASET INCLUDING WEIGHTED INDEX
+total.data <- cbind(EFOTW.main, weighted.index)
+
+
+##### REGRESSION DISCONTINUITY FOR INDEX ####
+#REGRESSION DISCONTIUITY
+summary(RDestimate(weighted.index ~ Year, data = total.data, cutpoint = 2009))
+#REGRESSION DISCONTIUITY PLOT
+##USING RDD PACKAGE
+plot(RDestimate(weighted.index ~ Year, data = total.data, cutpoint = 2009))
+
+#USING GGPLOT2
+#require(ggplot2)
+#ggplot(final.data, aes(V2, V1, color = "D")) +
+#  geom_point() + stat_smooth(size = 1.5) +
+#  geom_vline(xintercept=2009, linetype="longdash") +
+#  xlab("Years") +
+#  ylab("Index Scores") +
+#  scale_colour_discrete(name="Experimental\nCondition",
+#                        breaks=c("0", "1"), labels=c("Control", "Treatment"))
+
+
+#ELLE REGRESSION DISCONTINUITY YAPMA ÇABASI
+total.data.with.dummy <- cbind(total.data, matrix(0, nrow = nrow(EFOTW.main), ncol =1))
+colnames(total.data.with.dummy) <- c(colnames(total.data), "2009 Dummy")
+for (i in EFOTW.main$Year) {
+  if(EFOTW.main$Year[i] > 2008) {
+    total.data.with.dummy$`2009 Dummy`[i] <- 1
+  }
+}
+
+summary(lm(total.data.with.dummy$weighted.index~total.data.with.dummy$Year + total.data.with.dummy$`2009 Dummy`))
+
+#mutate(.data = final.data, D = as.factor(ifelse(final.data$V2 > 2008, 1, 0)))
+
+#PRINCIPAL COMPONENT ANALYSIS
+prcomp(na.omit(EFOTW.numerical))
+
+#TABLE TO LATEX CODE
+xtable(summary(prcomp(na.omit(EFOTW.numerical))))
+#EXPORT TO EXCEL
+write_xlsx(as.data.frame(total.data), "C:\\Users\\Kaan\\Desktop\\final.data.xlsx")
+
