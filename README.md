@@ -13,3 +13,4 @@ SORUNLAR    :   <br />
                 -Her veri setinde bulunan ülkeler farklı. Her veride ortak olan ülkeleri kullanmamız lazım. <br />
                 -Veri isimleri farklı. Örneğin bir veri setinde Bahamas olan yer diğerinde Bahamas, The. <br />
 SİZ         :   Bir tanesiniz.   <br />
+Overleaf    :   https://www.overleaf.com/2288969695nswsfjpwjdgp
