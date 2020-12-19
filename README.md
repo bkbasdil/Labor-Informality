@@ -6,6 +6,7 @@ FİNAL.DATA  :   <br />
                 -İlk excel sheet'te EFOTW subindexindex verileri ve indexin kendisi var. <br />
                 -İkinci excel sheet'te Law and Order verileri var. <br />
                 -Üçüncü excel sheet'te informality verileri var. <br />
+                -Dördüncü excelde penn'den size of government verileri var. <br />
 SORUNLAR    :   <br />
                 -İlk excel sheet'te y axiste hem ülkeler hem yıllar var. <br />
                 -İkinci excel sheet'te y axiste ülkeler x axiste yıllar var. <br />
